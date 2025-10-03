@@ -1,23 +1,22 @@
 import streamlit as st
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import OpenAIEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.chains import RetrievalQA
-from langchain_community.chat_models import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 import os
 
 # --- UI Configuration ---
-st.set_page_config(page_title="Chat with Your Book", page_icon="📚", layout="wide")
-st.title("📚 Chat with Your Book")
+st.set_page_config(page_title="Chat with Your Book (Gemini Edition)", page_icon="📚", layout="wide")
+st.title("📚 Chat with Your Book (Gemini Edition)")
 st.markdown("---")
 
 # --- App Description in Sidebar ---
 with st.sidebar:
     st.header("About This Chatbot")
     st.markdown(
-        "This chatbot is your personal assistant for the pre-loaded book. "
-        "Ask any question about its content, and the AI will find the answer for you."
+        "This chatbot is powered by Google Gemini and can answer questions about the pre-loaded book."
     )
 
 # --- Define the path to your pre-uploaded book ---
@@ -28,10 +27,10 @@ def create_qa_chain():
     """
     Sets up the entire RAG pipeline once and caches it.
     """
-    # Load the OpenAI API key from Streamlit's secrets
-    openai_api_key = st.secrets.get("OPENAI_API_KEY")
-    if not openai_api_key:
-        st.error("OpenAI API key not found! Please add it to your Streamlit secrets.", icon="🚨")
+    # Load the Google API key from Streamlit's secrets
+    google_api_key = st.secrets.get("GOOGLE_API_KEY")
+    if not google_api_key:
+        st.error("Google API key not found! Please add it to your Streamlit secrets.", icon="🚨")
         st.stop()
     
     # 1. Load the PDF from the hardcoded path
@@ -42,14 +41,14 @@ def create_qa_chain():
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=150)
     docs = text_splitter.split_documents(documents)
 
-    # 3. Create embeddings using OpenAI
-    embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
+    # 3. Create embeddings using Google's model
+    embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001", google_api_key=google_api_key)
 
     # 4. Create the FAISS Vector Store
     db = FAISS.from_documents(docs, embeddings)
 
-    # 5. Set up the LLM using OpenAI's GPT model
-    llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.7, openai_api_key=openai_api_key)
+    # 5. Set up the LLM using Google's Gemini model
+    llm = ChatGoogleGenerativeAI(model="gemini-pro", google_api_key=google_api_key, temperature=0.7)
 
     # 6. Create the RetrievalQA chain
     qa_chain = RetrievalQA.from_chain_type(
