@@ -2,6 +2,6 @@ streamlit
 langchain
 pypdf
 faiss-cpu
-openai
-tiktoken
+google-generativeai
+langchain-google-genai
 langchain-community
